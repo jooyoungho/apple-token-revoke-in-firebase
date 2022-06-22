@@ -75,4 +75,168 @@ However, we need to get a refresh token through authorizationCode, and this oper
 Turn off XCode for a while and go to your code in Firebase functions.<br>
 If you have never used functions, please refer to https://firebase.google.com/docs/functions.
 
+In Firebase functions, you can use JavaScript or Type Script, and I was written in JavaScript.
+
+First, let's declare a function that creates a JWT globally. Install the required packages with npm install.<br>
+There is a place to write the key file path and ID(Team, Client, Key), so please write it in your own information.
+
+  ```
+  function makeJWT() {
+
+    const jwt = require('jsonwebtoken')
+    const fs = require('fs')
+
+    // Path to download key file from developer.apple.com/account/resources/authkeys/list
+    let privateKey = fs.readFileSync('AuthKey_XXXXXXXXXX.p8');
+
+    //Sign with your team ID and key ID information.
+    let token = jwt.sign({ 
+    iss: 'YOUR TEAM ID',
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 120,
+    aud: 'https://appleid.apple.com',
+    sub: 'YOUR CLIENT ID'
+    
+    }, privateKey, { 
+    algorithm: 'ES256',
+    header: {
+    alg: 'ES256',
+    kid: 'YOUR KEY ID',
+    } });
+    
+    return token;
+  }
+  ```
   
+The above function is returned by creating JWT based on your key information.<br>
+Now, let's get the Refresh token with AuthorizationCode.<br>
+We will add a function called getRefreshToken to functions.
+
+  ```
+  exports.getRefreshToken = functions.https.onRequest(async (request, response) => {
+
+      //import the module to use
+      const axios = require('axios');
+      const qs = require('qs')
+
+      const code = request.query.code;
+      const client_secret = makeJWT();
+
+      let data = {
+          'code': code,
+          'client_id': 'YOUR CLIENT ID',
+          'client_secret': client_secret,
+          'grant_type': 'authorization_code'
+      }
+      
+      return axios.post(`https://appleid.apple.com/auth/token`, qs.stringify(data), {
+      headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+      },
+      })
+      .then(async res => {
+          const refresh_token = res.data.refresh_token;
+          response.send(refresh_token);
+          
+      });
+
+  });
+  ```
+
+When you call the above function, you get the code from the query and get a refresh_token.
+For code, this is the authorizationCode we got from the app in the first place.
+Before connecting to the app, let's add a revoke function as well.
+
+
+  ```
+
+exports.revokeToken = functions.https.onRequest( async (request, response) => {
+
+    //import the module to use
+    const axios = require('axios');
+    const qs = require('qs');
+
+    const refresh_token = request.query.refresh_token;
+    const client_secret = makeJWT();
+
+    let data = {
+        'token': refresh_token,
+        'client_id': 'YOUR CLIENT ID',
+        'client_secret': client_secret,
+        "token_type_hint": "refresh_token"
+    };
+
+    return axios.post(`https://appleid.apple.com/auth/revoke`, qs.stringify(data), {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+    })
+    .then(async res => {
+        console.log(res.data);
+    });
+});
+
+  ```
+
+The above function revokes the login information based on the refresh_token we got.<br>
+So far we have configured our functions, and when we do 'firebase deploy functions' we will have something we added to the Firebase functions console.
+
+![img](./img.png)
+
+Now back to Xcode.<br>
+Call the Functions address in the code you wrote earlier to save Refresh token.<br>
+I saved it in UserDefaults, You can save it in the Firebase database.
+
+  ```
+  ...
+
+  // Add new code below
+  if let authorizationCode = appleIDCredential.authorizationCode, let codeString = String(data: authorizationCode, encoding: .utf8) {
+                
+        let url = URL(string: "https://YOUR-URL.cloudfunctions.net/getRefreshToken?code=\(codeString)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "https://apple.com")!
+              
+          let task = URLSession.shared.dataTask(with: url) {(data, response, error) in
+              
+              if let data = data {
+                  let refreshToken = String(data: data, encoding: .utf8) ?? ""
+                  print(refreshToken)
+                  UserDefaults.standard.set(refreshToken, forKey: "refreshToken")
+                  UserDefaults.standard.synchronize()
+              }
+          }
+        task.resume()
+        
+    }
+  
+  ...
+  
+  ```
+
+
+At this point, the user's device will save the refresh_token as UserDefaults when logging in.
+Now all that's left is to revoke when the user leaves the service.
+
+
+  ```
+    func removeAccount() {
+      let token = UserDefaults.standard.string(forKey: "refreshToken")
+
+      if let token = token {
+        
+          let url = URL(string: "https://YOUR-URL.cloudfunctions.net/revokeToken?refresh_token=\(token)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "https://apple.com")!
+                
+          let task = URLSession.shared.dataTask(with: url) {(data, response, error) in
+            guard data != nil else { return }
+          }
+                
+          task.resume()
+          
+      }
+      ...
+      Delete other member information from the database...
+    }
+          
+  ```
+
+If we've followed everything up to this point, our app should have been removed from your settings - passwords & security - apps using your Apple ID.<br>
+Thank you.
