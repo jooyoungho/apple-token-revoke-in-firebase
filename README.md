@@ -78,7 +78,9 @@ If you have never used functions, please refer to https://firebase.google.com/do
 In Firebase functions, you can use JavaScript or TypeScript, for me, I used JavaScript.
 
 First, let's declare a function that creates a JWT globally. Install the required packages with npm install.<br>
-There is a place to write route of your key file and ID(Team, Client, Key), so plz write your own information.
+There is a place to write route of your key file and ID(Team, Client, Key), so plz write your own information.<br>
+If you do not know your ID information, please refer to the relevant issue.<br>
+https://github.com/jooyoungho/apple-token-revoke-in-firebase/issues/1
 
   ```
   function makeJWT() {
