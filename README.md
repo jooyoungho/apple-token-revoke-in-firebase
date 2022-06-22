@@ -2,8 +2,8 @@
 
 This document describes how to revoke the token of Sign in with Apple in the Firebase environment.<br>
 In accordance with Apple's review guidelines, apps that do not take action by June 30, 2022 may be removed.<br>
-A translator was used to create the document. Please forgive me if the sentence is weird.<br>
-**This document uses Firebase's Functions, and if Firebase provides related functions in the future, use it.**
+A translator was used to write this document, so I apologize whenever you feel weird about these sentences and describes.<br>
+**This document uses Firebase's Functions, and if Firebase provides related function about this, I recommend using it.**
 
 The whole process is as follows.
 1. Get authorizationCode from App where user log in.
@@ -71,14 +71,14 @@ What we need is the authorizationCode. Add the following code under guard where 
   ```
   
 Once you get this far, you can get the authorizationCode when the user log in.<br>
-However, we need to get a refresh token through authorizationCode, and this operation requires JWT, so let's implement it with Firebase functions.
+However, we need to get a refresh token through authorizationCode, and this operation requires JWT, so let's do this with Firebase functions.
 Turn off Xcode for a while and go to your code in Firebase functions.<br>
 If you have never used functions, please refer to https://firebase.google.com/docs/functions.
 
-In Firebase functions, you can use JavaScript or Type Script, and I was written in JavaScript.
+In Firebase functions, you can use JavaScript or TypeScript, for me, I used JavaScript.
 
 First, let's declare a function that creates a JWT globally. Install the required packages with npm install.<br>
-There is a place to write the key file path and ID(Team, Client, Key), so please write it in your own information.
+There is a place to write route of your key file and ID(Team, Client, Key), so plz write your own information.
 
   ```
   function makeJWT() {
