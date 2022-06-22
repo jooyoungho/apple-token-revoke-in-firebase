@@ -131,7 +131,7 @@ We will add a function called getRefreshToken to functions.
       
       return axios.post(`https://appleid.apple.com/auth/token`, qs.stringify(data), {
       headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
+          'Content-Type': 'application/x-www-form-urlencoded'
       },
       })
       .then(async res => {
@@ -163,7 +163,7 @@ exports.revokeToken = functions.https.onRequest( async (request, response) => {
         'token': refresh_token,
         'client_id': 'YOUR CLIENT ID',
         'client_secret': client_secret,
-        "token_type_hint": "refresh_token"
+        'token_type_hint': 'refresh_token'
     };
 
     return axios.post(`https://appleid.apple.com/auth/revoke`, qs.stringify(data), {
