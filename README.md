@@ -72,7 +72,7 @@ What we need is the authorizationCode. Add the following code under guard where 
   
 Once you get this far, you can get the authorizationCode when the user log in.<br>
 However, we need to get a refresh token through authorizationCode, and this operation requires JWT, so let's implement it with Firebase functions.
-Turn off XCode for a while and go to your code in Firebase functions.<br>
+Turn off Xcode for a while and go to your code in Firebase functions.<br>
 If you have never used functions, please refer to https://firebase.google.com/docs/functions.
 
 In Firebase functions, you can use JavaScript or Type Script, and I was written in JavaScript.
@@ -233,7 +233,8 @@ Now all that's left is to revoke when the user leaves the service.
           
       }
       ...
-      Delete other member information from the database...
+      //Delete other member information from the database...
+      FirebaseAuthentication.shared.signOut()
     }
           
   ```
