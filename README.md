@@ -239,5 +239,6 @@ Now all that's left is to revoke when the user leaves the service.
           
   ```
 
-If we've followed everything up to this point, our app should have been removed from your settings - passwords & security - apps using your Apple ID.<br>
+If we've followed everything up to this point, our app should have been removed from your settings - passwords & security - apps using your Apple ID.
+
 Thank you.
