@@ -4,6 +4,7 @@ This document describes how to revoke the token of Sign in with Apple in the Fir
 In accordance with Apple's review guidelines, apps that do not take action by June 30, 2022 may be removed.<br>
 A translator was used to write this document, so I apologize whenever you feel weird about these sentences and describes.<br>
 **This document uses Firebase's Functions, and if Firebase provides related function in the future, I recommend using it.**
+
 The whole process is as follows.
 1. Get authorizationCode from App where user log in.
 2. Get a refresh token with no expiry time using authorizationCode with expiry time.
