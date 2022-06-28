@@ -188,7 +188,7 @@ So far we have configured our functions, and when we do 'firebase deploy functio
 
 Now back to Xcode.<br>
 Call the Functions address in the code you wrote earlier to save Refresh token.<br>
-I saved it in UserDefaults, You can save it in the Firebase database(Firestore).
+In the example, it is saved as UserDefaults, but for security reasons, iCloud keychain is recommended.
 
 
   ```
@@ -204,7 +204,7 @@ I saved it in UserDefaults, You can save it in the Firebase database(Firestore).
               if let data = data {
                   let refreshToken = String(data: data, encoding: .utf8) ?? ""
                   print(refreshToken)
-                  // *For security reasons, it is recommended to store in Firestore rather than UserDefaults.
+                  // *For security reasons, we recommend iCloud keychain rather than UserDefaults.
                   UserDefaults.standard.set(refreshToken, forKey: "refreshToken")
                   UserDefaults.standard.synchronize()
               }
