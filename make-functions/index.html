@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link href="bootstrap.min.css" rel="stylesheet">
+
+    <title>apple-token-revoke-in-firebase</title>
+    <style>
+        .markdown-body pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: #f3f3f3;
+            border-radius: 6px;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <h1 class="mt-3 mb-3">apple-token-revoke-in-firebase</h1>
+        <div class="alert alert-success" role="alert">
+            I do not store any personal information.
+        </div>
+        <p>In this page, we will create a function that is used to revoke the Sign in with Apple token in Firebase Functions.
+            <a href="https://github.com/jooyoungho/apple-token-revoke-in-firebase">See this link for more details.</a><br>
+            <b>If Firebase provides related function in the future, I recommend using it.</b>
+        </p>
+        <label for="" class="form-label">TEAM ID</label>
+        <input type="text" id="TEAM-ID" class="form-control" aria-describedby="passwordHelpBlock">
+        <div id="" class="form-text">
+            <p><small>TEAM ID: Your team ID, which can be found at <a href="https://developer.apple.com/account/#!/membership" target="_blank">https://developer.apple.com/account/#!/membership</a></small></p>
+        </div>
+        
+        <label for="" class="form-label">CLIENT ID</label>
+        <input type="text" id="CLIENT-ID" class="form-control" aria-describedby="passwordHelpBlock">
+        <div id="" class="form-text">
+            <p><small>CLIENT ID: For apps, this is your App ID (IDENTIFIER) located at <a href="https://developer.apple.com/account/resources/identifiers/list" target="_blank">https://developer.apple.com/account/resources/identifiers/list</a></small></p>
+        </div>
+        
+        <label for="" class="form-label">KEY ID</label>
+        <input type="text" id="KEY-ID" class="form-control" aria-describedby="passwordHelpBlock">
+        <div id="" class="form-text">
+            <p><small>KEY ID: This is the Key ID that appears when you go to  <a href="https://developer.apple.com/account/resources/authkeys/list" target="_blank">https://developer.apple.com/account/resources/authkeys/list</a></small></p>
+        </div>
+        <button type="button" class="btn btn-primary generate-btn">Generate code</button>
+        <br>
+        <br>
+
+        <div class="markdown-body" style="display: none;">
+            <b class="m-1 mb-3">1. Firebase Functions Setup</b><br>
+            <a target="_blank" href="https://firebase.google.com/docs/functions/get-started">firebase.google.com/docs/functions/get-started</a><br><br>
+
+        <b class="m-1 mb-3">2. terminal</b>
+        <pre id="npm">$ cd YOUR_FIREBASE_FOLDER/functions
+$ npm install fs jsonwebtoken qs</pre>
+
+        <b class="m-1 mb-3">3. index.js</b>
+        <pre id="index-js">Please fill in the fields above.</pre>
+        <br>
+        <b class="m-1 mb-3">4. Put your key file in the same folder as index.js.</b><br>
+        <p id="key-file-path"></p><br>
+
+        <b class="m-1 mb-3">5. terminal (Firebase Deployment)</b>
+        <pre id="">$ firebase deploy --only functions</pre>
+        <br>
+
+        <b class="m-1 mb-3">6. Call the corresponding Firebase Functions function from your Xcode project.</b><br>
+        Please refer to the bottom part of the following link.: <a href="https://github.com/jooyoungho/apple-token-revoke-in-firebase">https://github.com/jooyoungho/apple-token-revoke-in-firebase</a><br><br>
+        </div>
+
+      </div>
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <script>
+            $('.generate-btn').click(function(){
+                $('.markdown-body').show();
+                let team_id = $('#TEAM-ID').val();
+                let client_id = $('#CLIENT-ID').val();
+                let key_id = $('#KEY-ID').val();
+
+            let text = `// The Cloud Functions for Firebase SDK to create Cloud Functions and set up triggers.
+const functions = require('firebase-functions');
+
+// The Firebase Admin SDK to access Firestore.
+const admin = require('firebase-admin');
+admin.initializeApp();
+
+function makeJWT() {
+
+    const jwt = require('jsonwebtoken')
+    const fs = require('fs')
+
+    // Path to download key file from developer.apple.com/account/resources/authkeys/list
+    let privateKey = fs.readFileSync('AuthKey_${key_id}.p8');
+
+    //Sign with your team ID and key ID information.
+    let token = jwt.sign({ 
+    iss: '${team_id}',
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 120,
+    aud: 'https://appleid.apple.com',
+    sub: '${client_id}'
+
+    }, privateKey, { 
+    algorithm: 'ES256',
+    header: {
+    alg: 'ES256',
+    kid: '${key_id}',
+    } });
+
+    return token;
+}
+
+exports.getRefreshToken = functions.https.onRequest(async (request, response) => {
+
+    //import the module to use
+    const axios = require('axios');
+    const qs = require('qs')
+
+    const code = request.query.code;
+    const client_secret = makeJWT();
+
+    let data = {
+        'code': code,
+        'client_id': '${client_id}',
+        'client_secret': client_secret,
+        'grant_type': 'authorization_code'
+    }
+
+    return axios.post('https://appleid.apple.com/auth/token', qs.stringify(data), {
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    })
+    .then(async res => {
+        const refresh_token = res.data.refresh_token;
+        response.send(refresh_token);
+        
+    });
+
+});
+
+
+exports.revokeToken = functions.https.onRequest( async (request, response) => {
+
+    //import the module to use
+    const axios = require('axios');
+    const qs = require('qs');
+
+    const refresh_token = request.query.refresh_token;
+    const client_secret = makeJWT();
+
+    let data = {
+        'token': refresh_token,
+        'client_id': '${client_id}',
+        'client_secret': client_secret,
+        'token_type_hint': 'refresh_token'
+    };
+
+    return axios.post('https://appleid.apple.com/auth/revoke', qs.stringify(data), {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+    })
+    .then(async res => {
+        console.log(res.data);
+    });
+});`;
+
+
+    $('.markdown-body #index-js').text(text);
+    $('#key-file-path').text(`Put the ${key_id}.p8 you got from Apple in the same folder as index.js.`);
+            });
+        </script>
+  </body>
+</html>
