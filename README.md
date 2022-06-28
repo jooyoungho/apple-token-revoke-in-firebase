@@ -12,6 +12,8 @@ The whole process is as follows.
 
 You can get a refresh token at https://appleid.apple.com/auth/token and revoke at https://appleid.apple.com/auth/revoke.
 
+Create custom functions code: https://jooyoungho.github.io/apple-token-revoke-in-firebase/make-functions/
+
 ## Getting started
 
 If you have implemented Apple Login using Firebase, you should have ASAuthorizationAppleIDCredential somewhere in your project.<br>
