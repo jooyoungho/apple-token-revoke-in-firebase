@@ -176,6 +176,7 @@ exports.revokeToken = functions.https.onRequest( async (request, response) => {
     })
     .then(async res => {
         console.log(res.data);
+        response.send('Complete');
     });
 });
 
